@@ -1,0 +1,9 @@
+main: io.github.derelektriker.blankplugin
+name: blankplugin
+version: 0.1
+
+commands:
+   move:
+      description: Te fumas un caño y te vas a otra dimension.
+      usage: /<command> [world]
+      permission-message: You don't have <permission>
