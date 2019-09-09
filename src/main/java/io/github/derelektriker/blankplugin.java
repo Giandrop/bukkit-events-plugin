@@ -29,18 +29,79 @@ import org.bukkit.event.Listener;
 
 public final class blankplugin extends JavaPlugin {
     
+    //Structure used to save all the valuable information regarding to the player at the moment of warping between worlds
+    public class PlayerSnapshot{
+        String name;
+        ItemStack[] storage,armor;
+        Double health;
+        int food;
+        Location pos;
+        public PlayerSnapshot(String name, ItemStack[] storage, ItemStack[] armor, Double health, int food, Location pos){
+            this.name = name;
+            this.storage = storage;
+            this.armor = armor;
+            this.health = health;
+            this.food = food;
+            this.pos = pos;
+        }
+    }
     
+    //Map used for storing player's information.
+    Map<String,PlayerSnapshot> playerMap = new HashMap<>();
+    
+
+    //In the near future, this method should load the PlayerMap from a file.
+    public Map<String,PlayerSnapshot> getPlayersMap(){
+        return this.playerMap;
+    }
+    
+    public void savePlayersMap(Map<String,PlayerSnapshot> playerMap){
+        this.playerMap = playerMap;
+    }
+
+
+    // Method used to send players to their Homeworld from the event
+    //    This means that we need to give all their items back y place them where they were before the event
+
+    public void sendPlayerHome(String name){
+        //We ask the server to give us the Player object matching the name
+        Player player = getServer().getPlayer(name);
+
+        //Checks if the player is online. This shouldn't be necessary ... but we check it just in case.
+        if(player == null){
+            return;
+        }
+
+        //If we had previous information about where the player was, and what did he/she had  ... we have to return his/her belongings.
+        if(this.playerMap.containsKey(name)){
+            //Just for logging purposes
+            PlayerSnapshot playerData = this.playerMap.get(name);
+            player.sendMessage("Returning your items...");
+            player.getInventory().setArmorContents(playerData.armor);
+            player.getInventory().setContents(playerData.storage);
+            player.setFoodLevel(playerData.food);
+            player.setHealth(playerData.health);
+            player.teleport(playerData.pos);
+            this.playerMap.remove(name);
+        }
+        else{
+            if (player.getBedSpawnLocation() == null){
+                player.teleport(getServer().getWorld("world").getSpawnLocation());
+            }
+            else{
+                player.teleport(player.getBedLocation());
+            }
+            player.getInventory().clear();
+            player.setFoodLevel(10);
+            player.setHealth(10);
+        }
+        player.setFallDistance(0);
+        player.setGameMode(GameMode.SURVIVAL);
+    }
+
     public class MyListener implements Listener
     {
         
-        Map<String,Vector<ItemStack[]>> playerInvMap = new HashMap<>();
-        Map<String,Location> playerLocMap = new HashMap<>();
-
-        public void update(Map<String,Vector<ItemStack[]>> a, Map<String,Location> b){
-            playerInvMap = a;
-            playerLocMap = b;
-        }
-
         @EventHandler
         public void onDamage(EntityDamageEvent e) {
             Entity ent = e.getEntity();
@@ -49,78 +110,13 @@ public final class blankplugin extends JavaPlugin {
                 Double dmg = e.getDamage();
                 if (player.getWorld().getName().equals("event") && player.getHealth()- dmg <= 0){
                     e.setCancelled(true);
-                    if(this.playerLocMap.containsKey(player.getName())){
-                        player.sendMessage("Returning your items...");
-                        Vector<ItemStack[]> all = this.playerInvMap.get(player.getName());
-                        player.getInventory().setArmorContents(all.get(0));
-                        player.getInventory().setContents(all.get(1));
-                        player.teleport(this.playerLocMap.get(player.getName()));
-                        this.playerInvMap.remove(player.getName());
-                        this.playerLocMap.remove(player.getName());
-                    }
-                    else{
-                        player.teleport(getServer().getWorld("world").getSpawnLocation());
-                        player.getInventory().clear();
-                    }
-                    player.setFoodLevel(10);
-                    player.setHealth(10);
-                    player.setFallDistance(0);
-                    player.setGameMode(GameMode.SURVIVAL);
+                    blankplugin.this.sendPlayerHome(player.getName());
                 }//end if hp<0
             }//end if instance player
         }
-
-
-
-        @EventHandler
-        public void onPlayerDeath(PlayerDeathEvent event){
-            Player player = event.getEntity().getPlayer();
-            
-            if(player.getWorld().getName().equals("event")){
-                player.setHealth(10);
-                player.setFoodLevel(10);
-                if(this.playerLocMap.containsKey(player.getName())){
-                    player.sendMessage("Returning your items...");
-                    Vector<ItemStack[]> all = this.playerInvMap.get(player.getName());
-                    player.getInventory().setArmorContents(all.get(0));
-                    player.getInventory().setContents(all.get(1));
-                    player.teleport(this.playerLocMap.get(player.getName()));
-                    this.playerInvMap.remove(player.getName());
-                    this.playerLocMap.remove(player.getName());
-                }
-                else{
-                    player.teleport(getServer().getWorld("world").getSpawnLocation());
-                    player.getInventory().clear();
-                }
-                player.setGameMode(GameMode.SURVIVAL);
-            }
-        }
-
-        @EventHandler
-        public void onPlayerRespawn(PlayerRespawnEvent event){
-            Player player = event.getPlayer();
-            player.sendMessage("Taking you where you belong...");
-            if(this.playerLocMap.containsKey(player.getName())){
-                player.sendMessage("Returning your items...");
-                Vector<ItemStack[]> all = this.playerInvMap.get(player.getName());
-                player.getInventory().setArmorContents(all.get(0));
-                player.getInventory().setContents(all.get(1));
-                
-                player.teleport(this.playerLocMap.get(player.getName()));
-                this.playerInvMap.remove(player.getName());
-                this.playerLocMap.remove(player.getName());
-            }
-            else{
-                player.teleport(getServer().getWorld("world").getSpawnLocation());
-                player.getInventory().clear();
-            }
-            player.setGameMode(GameMode.SURVIVAL);
-            
-        }
     }
-    
-    Map<String,Vector<ItemStack[]>> playerInvMap = new HashMap<>();
-    Map<String,Location> playerLocMap = new HashMap<>();
+
+
     MyListener myLis = new MyListener();
    
     //Unloading maps, to rollback maps. Will delete all player builds until last server save
@@ -145,7 +141,6 @@ public final class blankplugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-    // TODO Insert logic to be performed when the plugin is enabled
         // this.inventories = new Map<String,Vector<ItemStack[]>>();
         Bukkit.getServer().createWorld(new WorldCreator("event"));
         getServer().getPluginManager().registerEvents(myLis, this);
@@ -153,7 +148,6 @@ public final class blankplugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-    // TODO Insert logic to be performed when the plugin is disabled
         // Bukkit.getServer().unloadWorld("event", true);
         // Bukkit.getServer().reload();
     }
@@ -190,34 +184,14 @@ public final class blankplugin extends JavaPlugin {
                             return true;
                         }
                         sender.sendMessage("Moviendo al mapa Event.");
-                        ItemStack _armor[] = player.getInventory().getArmorContents();
-                        ItemStack _cont[] = player.getInventory().getContents();
-                        Vector<ItemStack[]> all = new Vector<ItemStack[]>();
-                        all.add(_armor);
-                        all.add( _cont);
-                        this.playerInvMap.put(player.getName(), all);
-                        this.playerLocMap.put(player.getName(), player.getLocation());
+                        this.playerMap.put(player.getName(),new PlayerSnapshot(player.getName(), player.getInventory().getContents(), player.getInventory().getArmorContents(), player.getHealth(), player.getFoodLevel(), player.getLocation()));
                         player.getInventory().clear();
                         player.teleport(new Location(Bukkit.getWorld("event"), 6, 6, 6));
                         player.setGameMode(GameMode.CREATIVE);
-                        this.myLis.update(playerInvMap, playerLocMap);
                     }
                     else if(args[0].equals("world")){
                         if(player.getWorld().getName().equals("event")){
-                            if (this.playerInvMap.containsKey(player.getName())){
-                                Vector<ItemStack[]> all = this.playerInvMap.get(player.getName());
-                                player.getInventory().setArmorContents(all.get(0));
-                                player.getInventory().setContents(all.get(1));
-                                player.teleport(this.playerLocMap.get(player.getName()));
-                                this.playerInvMap.remove(player.getName());
-                                this.playerLocMap.remove(player.getName());
-                                this.myLis.update(playerInvMap, playerLocMap);
-                            }
-                            else{
-                                player.teleport(getServer().getWorld("world").getSpawnLocation());
-                                player.getInventory().clear();
-                            }
-                            player.setGameMode(GameMode.SURVIVAL);
+                            this.sendPlayerHome(player.getName());
                         }
                         else{
                             sender.sendMessage("Solo podes volver, si te habias ido... Y vos no fuiste a ningun lado hombre verga.");
@@ -227,7 +201,6 @@ public final class blankplugin extends JavaPlugin {
                         sender.sendMessage("A donde queres ir papa? Vas a terminar en la villa 31 si seguis asi... Intenta con otro mundo.");
                     }
                 }
-                // do something
             }
             return true;
         }
