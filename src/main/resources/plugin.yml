@@ -1,9 +1,29 @@
 main: io.github.derelektriker.blankplugin
 name: blankplugin
 version: 0.1
+# api-version: 1.13
 
 commands:
    move:
       description: Te fumas un caño y te vas a otra dimension.
       usage: /<command> [world]
       permission-message: You don't have <permission>
+   create_world:
+      description: Crea un nuevo mundo
+      usage: /create_world [worldName]
+      permission-message: You don't have <permission>
+   world_list:
+      description: Muestra los mapas del server
+      usage: /world_list
+   delete_world:
+      description: Elimina un mapa
+      usage: /delete_world [worldName]
+   enter:
+      description: Entra a un evento
+      usage: /enter
+   exit:
+      description: Sale de un evento
+      usage: /exit
+   broadcast:
+      description: Para probar los eventos
+      usage: /broadcast
