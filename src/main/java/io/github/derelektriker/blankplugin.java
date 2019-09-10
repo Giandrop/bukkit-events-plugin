@@ -2,8 +2,10 @@ package io.github.derelektriker;
 // package {$TopLevelDomain}.{$Domain}.{$PluginName};
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Vector;
 
 import org.bukkit.Bukkit;
@@ -13,6 +15,11 @@ import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
+import org.bukkit.block.*;
+import org.bukkit.Material;
+import org.bukkit.inventory.meta.*;
+import org.bukkit.enchantments.*;
 import org.bukkit.GameMode;
 import org.bukkit.WorldCreator;
 import org.bukkit.event.EventHandler;
@@ -24,6 +31,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.event.Listener;
 
@@ -157,17 +165,52 @@ public final class blankplugin extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (cmd.getName().equalsIgnoreCase("sss")) { // If the player typed /basic then do the following...
-            // do something...
-            // Bukkit.broadcastMessage("Niro es Puto.");
+        if (cmd.getName().equalsIgnoreCase("place")) { 
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("This command can only be run by a player.");
+            } else {
+                    int x=12;
+                    int y=12;
+                    int z=12;
+                    Location chestloc = new Location(
+                                Bukkit.getServer().getWorld("event"),
+                                x,
+                                y,
+                                z);
+                    Block block = (Block) chestloc.getBlock();
+                    chestloc.getBlock().setType(Material.CHEST);
+                    Chest chest = (Chest) block.getState();
+                    
+                    ItemStack stick = new ItemStack(Material.STICK, 1);
+                    stick.addUnsafeEnchantment(Enchantment.KNOCKBACK, 4);
+                    chest.getInventory().addItem(stick);
 
-            // this.rollback("event");
-            // Player target = (Bukkit.getServer().getPlayer(args[0]));
-            
-            
+                    ItemStack pinkArmor = new ItemStack(Material.LEATHER_CHESTPLATE, 1);
+                    ItemMeta pinkArmorMeta = pinkArmor.getItemMeta();
+                    pinkArmorMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS,ItemFlag.HIDE_UNBREAKABLE);
+                    pinkArmor.addUnsafeEnchantment(Enchantment.THORNS, 1);
+                    pinkArmorMeta.setDisplayName("Pink Armor");
+                    List<String> lore = Arrays.asList("IS PINK!");
+                    pinkArmorMeta.setLore(lore);
+                    ((LeatherArmorMeta)pinkArmorMeta).setColor(Color.fromRGB(252,3,198));
+                    pinkArmor.setItemMeta(pinkArmorMeta);
+                    chest.getInventory().addItem(pinkArmor);
 
-            // return true;
-        } else if (cmd.getName().equalsIgnoreCase("move")) {
+                    
+                    ItemStack KiritosArmor = new ItemStack(Material.LEATHER_CHESTPLATE, 1);
+                    ItemMeta KiritosArmorMeta = KiritosArmor.getItemMeta();
+                    KiritosArmorMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS,ItemFlag.HIDE_UNBREAKABLE);
+                    KiritosArmor.addUnsafeEnchantment(Enchantment.THORNS, 1);
+                    KiritosArmorMeta.setDisplayName("Kirito's Armor");
+                    lore = Arrays.asList("Legendary Chestplate used by the greatest swordsman of all time!");
+                    KiritosArmorMeta.setLore(lore);
+                    ((LeatherArmorMeta)KiritosArmorMeta).setColor(Color.BLACK);
+                    KiritosArmor.setItemMeta(KiritosArmorMeta);
+                    chest.getInventory().addItem(KiritosArmor);
+                    
+                }
+        }
+        else if (cmd.getName().equalsIgnoreCase("move")) {
             if (!(sender instanceof Player)) {
                 sender.sendMessage("This command can only be run by a player.");
             } else {

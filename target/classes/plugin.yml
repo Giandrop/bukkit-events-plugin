@@ -7,3 +7,7 @@ commands:
       description: Te fumas un caño y te vas a otra dimension.
       usage: /<command> [world]
       permission-message: You don't have <permission>
+   place:
+      description: Te fumas un caño y te vas a otra dimension.
+      usage: /<command> [world]
+      permission-message: You don't have <permission>
